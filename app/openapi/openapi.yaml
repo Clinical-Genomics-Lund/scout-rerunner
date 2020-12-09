@@ -1,0 +1,122 @@
+openapi: 3.0.1
+info:
+  title: Scout reanalysis API
+  version: "1.0"
+  description: API to initiate new reruns
+  license: 
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: /v1.0
+paths:
+  /rerun:
+    post:
+      summary: Recives information required to toggle a rerun
+      description: Toggle a pedigree reanalysis of either a subset or with modified pedigree information of a case.
+      operationId: app.api.rerun_wrapper
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: case_id
+          in: query
+          description: The unique id for the case
+          required: true
+          schema:
+            type: string
+        - name: sample_ids
+          in: query
+          description: Unique identifiers of the samples to include. Empty list will be interpretted as all.
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/SampleId"
+      requestBody:
+        description: Parameters
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModificatedData"
+      responses:
+        '204':
+          description: Successfully triggered a rerun
+        '401':
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+        '404':
+          description: Case do not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+        default:
+          description: Unknown error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+      security:
+        - ApiKeyAuth: ['super_user']
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: basic
+      x-basicInfoFunc: app.api.authenticate_user
+  schemas:
+    SampleId:
+      type: string
+    SampleMetadata:
+      description: Modification of data
+      required:
+        - sample_id
+        - sex
+        - phenotype
+      type: object
+      properties:
+        sample_id:
+          description: Sample id
+          type: string
+        sex:
+          description: Encoding of sex, 0 = unknown; 1 = male; 2 = female
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 2
+        phenotype:
+          description: If an individual is affected by disease; 0 = unknown; 1 = uaffected; 2 = affected
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 2
+      example:
+        sample_id: 1234-56
+        sex: 1
+        phenotype: 0
+    ModificatedData:
+      description: List of modified data
+      type: array
+      items:
+        $ref: "#/components/schemas/SampleMetadata"
+    ErrorModel:
+      type: object
+      required:
+      - message
+      - code
+      properties:
+        message:
+          type: string
+        code:
+          type: integer
+          minimum: 100
+          maximum: 600
+  responses:
+    UnauthorizedError:
+      description: API key is missing or invalid
+      headers:
+        WWW_Authenticate:
+          schema:
+            type: string

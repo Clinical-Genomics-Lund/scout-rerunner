@@ -1,0 +1,13 @@
+TESTING: true
+# database connection
+MONGO_HOST: db
+MONGO_PORT: 27017
+MONGO_DBNAME: scout
+# remote connection
+WORKFLOW_HOST: 172.20.46.84
+WORKFLOW_USER: worker
+WORKFLOW_EXEC_SCRIPT: /fs1/bjorn/bnf-scripts/start_nextflow_analysis.pl
+WORKFLOW_DATA_DIR: /fs1/results_dev/test
+# whitelist users
+AUTHORIZED_USERS:
+  - clark.kent@mail.com

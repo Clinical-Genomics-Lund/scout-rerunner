@@ -1,0 +1,23 @@
+- _id: '9075-18'
+  case_id: '9075-18'
+  owner: klingen_38
+  individuals:
+    - individual_id: '9075-18'
+      mother: '2112-19'
+      father: '2113-19'
+      sex: male
+      phenotype: affected
+    - individual_id: '2113-19'
+      mother: '0'
+      father: '0'
+      sex: male
+      phenotype: unaffected
+    - individual_id: '2112-19'
+      mother: '0'
+      father: '0'
+      sex: female
+      phenotype: unaffected
+  vcf_files:
+    vcf_snv: 9075-18.snv.rescored.sorted.vcf.gz
+    vcf_sv: 9075-18.sv.rescored.sorted.vcf.gz
+    vcf_str: 9075-18.expansionhunter.vcf.gz

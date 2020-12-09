@@ -1,0 +1,12 @@
+# database connection
+MONGO_HOST: db
+MONGO_PORT: 27017
+MONGO_DBNAME: scout
+# remote connection
+WORKFLOW_HOST: 172.20.46.84
+WORKFLOW_USER: worker
+WORKFLOW_PATH: /fs1/pipelines/wgs_germline38/rescore.nf
+WORKFLOW_DATA_DIR: /fs1/results_dev/test
+# whitelist users
+authorized_users:
+  - clark.kent@mail.com
