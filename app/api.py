@@ -60,7 +60,7 @@ def conduct_reanalysis(case_id, **kwargs):
         base_fname = f"{case_id}_{date}_rescore"
         # write run data to csv format
         run_data_path = directory / f"{base_fname}.csv"
-        run_data = create_rundata_file(case_id)
+        run_data = create_rundata_file(run_data_path, case_id)
         # write pedigree file
         ped_path = directory / f"{base_fname}.ped"
         LOG.info(f"Writing pedigree to {ped_path}")
@@ -69,7 +69,7 @@ def conduct_reanalysis(case_id, **kwargs):
         # set up ssh options and connect to remote
         kwargs = {
             "passphrase": cnf.get("SSH_PASSPHRASE"),
-            "key_filename": cnf.get("SSH_KEY_FILENAME"),
+            "key_filename": [cnf.get("SSH_KEY_FILENAME")],
         }
         if kwargs["key_filename"] is None and os.environ.get("SSH_AGENT_PID") is None:
             raise SSHKeyException("No SSH key specified.")
@@ -105,7 +105,6 @@ def rerun_wrapper(case_id, **kwargs):
         msg = f"{type(err).__name__} - {str(err)}"
         LOG.error(msg)
         msg = "There was an error with the connection to the remote server, please contact administrator"
-        raise
         return msg, 500
     except Exception as err:  # generic data
         # clean up data

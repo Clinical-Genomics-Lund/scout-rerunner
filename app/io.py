@@ -165,6 +165,7 @@ def create_rundata_file(path, case_id):
     """Create rundata file."""
     with open(path, "w") as out:
         LOG.info(f"Writing rundata to {path}")
+        run_data =  create_rundata(case_id)
         cwriter = csv.DictWriter(out, fieldnames=list(run_data[0].keys()))
         cwriter.writeheader()
         for row in run_data:
