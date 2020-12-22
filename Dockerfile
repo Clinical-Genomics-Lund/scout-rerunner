@@ -19,8 +19,7 @@ COPY . /usr/src/app
 RUN pip install --upgrade pip &&            \
     pip wheel --no-cache-dir --no-deps      \
         --wheel-dir /usr/src/app/wheels     \
-        --requirement requirements.txt      \
-        gunicorn
+        --requirement requirements.txt
 
 
 #########
