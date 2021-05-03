@@ -15,7 +15,7 @@ from paramiko.ssh_exception import SSHException
 
 from .db import CaseNotFoundError
 from .exceptions import PipelineExecutionError, SSHKeyException
-from .io import IndividualIdNotFoundError, create_new_pedigree, create_rundata_file
+from .io import IndividualIdNotFoundError, create_new_pedigree, create_rundata
 
 LOG = logging.getLogger(__name__)
 
@@ -60,7 +60,14 @@ def conduct_reanalysis(case_id, **kwargs):
         base_fname = f"{case_id}_{date}_rescore"
         # write run data to csv format
         run_data_path = directory / f"{base_fname}.csv"
-        run_data = create_rundata_file(run_data_path, case_id)
+        with open(run_data_path, "w") as out:
+            LOG.info(f"Writing rundata to {run_data_path}")
+            run_data = create_rundata(case_id)
+            cwriter = csv.DictWriter(out, fieldnames=list(run_data[0].keys()))
+            cwriter.writeheader()
+            for row in run_data:
+                cwriter.writerow(row)
+
         # write pedigree file
         ped_path = directory / f"{base_fname}.ped"
         LOG.info(f"Writing pedigree to {ped_path}")
@@ -71,7 +78,10 @@ def conduct_reanalysis(case_id, **kwargs):
             "passphrase": cnf.get("SSH_PASSPHRASE"),
             "key_filename": [cnf.get("SSH_KEY_FILENAME")],
         }
-        if kwargs["key_filename"] is None and os.environ.get("SSH_AGENT_PID") is None:
+        if (
+            any(fname is None for fname in kwargs["key_filename"])
+            and os.environ.get("SSH_AGENT_PID") is None
+        ):
             raise SSHKeyException("No SSH key specified.")
 
         # setup connection
