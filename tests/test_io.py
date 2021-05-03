@@ -17,7 +17,7 @@ def test_create_rundata(app, monkeypatch):
 
     # assert correct headers
     headers = list(dta)
-    header_colnames = ["group", "assay", "vcf_sv", "vcf_snv", "vcf_str"]
+    header_colnames = ["group", "assay", "sv_vcf", "snv_vcf", "str_vcf"]
     assert headers == header_colnames
 
     # check header

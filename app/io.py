@@ -157,9 +157,9 @@ def create_rundata(case_id, rerun_group_id):
             "assay": "rescore-dry"
             if app.config["TESTING"]
             else "rescore",  # triggers correct nexflow parameter
-            "vcf_sv": resp["vcf_files"]["vcf_sv"],
-            "vcf_snv": resp["vcf_files"]["vcf_snv"],
-            "vcf_str": resp["vcf_files"]["vcf_str"],
+            "sv_vcf": resp["vcf_files"]["vcf_sv"],
+            "snv_vcf": resp["vcf_files"]["vcf_snv"],
+            "str_vcf": resp["vcf_files"]["vcf_str"],
         }
     )
     return [data_files]
