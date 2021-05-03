@@ -15,7 +15,17 @@ from invoke.runners import Result
 @pytest.fixture()
 def init_rerun_func(monkeypatch):
     """Initialize mocks for toggle rerun function."""
-    mock_rundata = Mock(return_value=[])
+    mock_rundata = Mock(
+        return_value=[
+            {
+                "group": "test_group",
+                "assay": "rescore",
+                "vcf_sv": "/path/to/sv.vcf",
+                "vcf_snv": "/path/to/snv.vcf",
+                "vcf_str": "/path/to/str.vcf",
+            }
+        ]
+    )
     mock_pedigree = Mock(return_value=Mock(spec=Family))
     mock_runrescore = Mock()
     # mock tempdir context manager
@@ -28,7 +38,7 @@ def init_rerun_func(monkeypatch):
         __enter__=mock_context,
         __exit__=Mock(),
     )
-    monkeypatch.setattr("app.api.create_rundata_file", mock_rundata)
+    monkeypatch.setattr("app.api.create_rundata", mock_rundata)
     monkeypatch.setattr("app.api.create_new_pedigree", mock_pedigree)
     monkeypatch.setattr("app.api.Connection", mock_connection)
     monkeypatch.setattr("app.api.run_rescore", mock_runrescore)
@@ -109,14 +119,11 @@ def test_toggle_rerun_success(app, monkeypatch, init_rerun_func):
         mock_runrescore,
     ) = init_rerun_func
     # Set mock ssh keys
-    test_config = {
+    conect_conf = {
         "SSH_KEY_FILENAME": "/path/to/ssh-keys",
         "SSH_PASSPHRASE": "phrase",
-        "WORKFLOW_HOST": "http://worker.remote",
-        "WORKFLOW_USER": "user",
-        "WORKFLOW_DATA_DIR": "/data/dir",
     }
-    for var, val in test_config.items():
+    for var, val in conect_conf.items():
         monkeypatch.setitem(app.config, var, val)
 
     # toggle rerun
@@ -130,11 +137,11 @@ def test_toggle_rerun_success(app, monkeypatch, init_rerun_func):
     mock_pedigree.assert_called_with(case_id, sample_ids, [])
     # test setting up connection
     mock_connection.assert_called_with(
-        host=test_config["WORKFLOW_HOST"],
-        user=test_config["WORKFLOW_USER"],
+        host="http://worker.remote",
+        user="user",
         connect_kwargs={
-            "key_filename": test_config["SSH_KEY_FILENAME"],
-            "passphrase": test_config["SSH_PASSPHRASE"],
+            "key_filename": [conect_conf["SSH_KEY_FILENAME"]],
+            "passphrase": conect_conf["SSH_PASSPHRASE"],
         },
     )
     # test transfering of files
@@ -153,7 +160,8 @@ def test_toggle_rerun_ssh_key(app, monkeypatch, init_rerun_func):
         mock_runrescore,
     ) = init_rerun_func
     # Set mock ssh keys
-    monkeypatch.setitem(app.config, "key_filename", None)
+    monkeypatch.setitem(app.config, "SSH_KEY_FILENAME", None)
+    monkeypatch.delenv("SSH_AGENT_PID", raising=False)
 
     # toggle rerun
     case_id = "9075-18"
