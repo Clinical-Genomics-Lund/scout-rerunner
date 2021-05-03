@@ -7,6 +7,8 @@ import attr
 import cattr
 from flask import current_app as app
 from pymongo.errors import InvalidId
+from collections import OrderedDict
+import datetime
 
 from .db import query_case
 from .exceptions import IndividualIdNotFoundError, NoSampleIdError
@@ -149,24 +151,16 @@ def create_new_pedigree(case_id, sample_ids, edited_sample_info=[]):
 def create_rundata(case_id):
     """Create rundata informaiton."""
     resp = query_case(case_id)
-    data_files = {
-        "group": case_id,
-        "assay": "rescore-dry"
-        if app.config["TESTING"]
-        else "rescore",  # triggers correct nexflow parameter
-        "vcf_snv": resp["vcf_files"]["vcf_snv"],
-        "vcf_sv": resp["vcf_files"]["vcf_sv"],
-        "vcf_str": resp["vcf_files"]["vcf_str"],
-    }
+    rerun_group_id = f"{case_id}-ped-update-{datetime.date.today().isoformat()}"
+    data_files = OrderedDict(
+        {
+            "group": case_id,
+            "assay": "rescore-dry"
+            if app.config["TESTING"]
+            else "rescore",  # triggers correct nexflow parameter
+            "vcf_sv": resp["vcf_files"]["vcf_sv"],
+            "vcf_snv": resp["vcf_files"]["vcf_snv"],
+            "vcf_str": resp["vcf_files"]["vcf_str"],
+        }
+    )
     return [data_files]
-
-
-def create_rundata_file(path, case_id):
-    """Create rundata file."""
-    with open(path, "w") as out:
-        LOG.info(f"Writing rundata to {path}")
-        run_data =  create_rundata(case_id)
-        cwriter = csv.DictWriter(out, fieldnames=list(run_data[0].keys()))
-        cwriter.writeheader()
-        for row in run_data:
-            cwriter.writerow(row)
