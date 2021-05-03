@@ -95,7 +95,7 @@ class Family(object):
         return cattr.unstructure(self._individuals)
 
 
-def create_new_pedigree(case_id, sample_ids, edited_sample_info=[]):
+def create_new_pedigree(case_id, new_case_id, sample_ids, edited_sample_info=[]):
     """Make new pedigree."""
     resp = query_case(case_id)
 
@@ -121,7 +121,7 @@ def create_new_pedigree(case_id, sample_ids, edited_sample_info=[]):
         raise IndividualIdNotFoundError(missing_ind)
 
     # create PED object
-    family_ped = Family(family_id=case_id)
+    family_ped = Family(family_id=new_case_id)
     for ind_id, individual in individuals.items():
         mod_data = edited_metadata.get(ind_id, {})  # get modified data
         # exclude familiy information for samples not selected
@@ -138,7 +138,7 @@ def create_new_pedigree(case_id, sample_ids, edited_sample_info=[]):
         family_ped.add_individual(
             Individual(
                 ind_id,
-                family_id=case_id,
+                family_id=new_case_id,
                 mother=mother,
                 father=father,
                 sex=sex,
@@ -148,13 +148,12 @@ def create_new_pedigree(case_id, sample_ids, edited_sample_info=[]):
     return family_ped
 
 
-def create_rundata(case_id):
+def create_rundata(case_id, rerun_group_id):
     """Create rundata informaiton."""
     resp = query_case(case_id)
-    rerun_group_id = f"{case_id}-ped-update-{datetime.date.today().isoformat()}"
     data_files = OrderedDict(
         {
-            "group": case_id,
+            "group": rerun_group_id,
             "assay": "rescore-dry"
             if app.config["TESTING"]
             else "rescore",  # triggers correct nexflow parameter

@@ -5,13 +5,15 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 from app.io import create_new_pedigree, create_rundata
+from app.api import build_new_case_id
 
 
 def test_create_rundata(app, monkeypatch):
     """Test if rundata was parsed correctly."""
     # setup data
     case_id = "9075-18"
-    dta = create_rundata(case_id)[0]
+    new_case_id = build_new_case_id(case_id)
+    dta = create_rundata(case_id, new_case_id)[0]
 
     # assert correct headers
     headers = list(dta)
@@ -19,7 +21,7 @@ def test_create_rundata(app, monkeypatch):
     assert headers == header_colnames
 
     # check header
-    assert dta["group"] == case_id
+    assert dta["group"] == new_case_id
 
     # check extraction of vcf
     assert all(dta[vcf].endswith("vcf.gz") for vcf in header_colnames[2:])
@@ -28,24 +30,26 @@ def test_create_rundata(app, monkeypatch):
 def test_assay_definition(app, monkeypatch):
     # check valid assays name when testing and not
     case_id = "9075-18"
-    dta = create_rundata(case_id)[0]
+    new_case_id = build_new_case_id(case_id)
+    dta = create_rundata(case_id, new_case_id)[0]
 
     # in testing environment
     assert dta["assay"] == "rescore-dry"
 
     # wo testing
     monkeypatch.setitem(app.config, "TESTING", False)
-    dta = create_rundata(case_id)[0]
+    dta = create_rundata(case_id, new_case_id)[0]
     assert dta["assay"] == "rescore"
 
 
 def test_create_pedigree(app):
     """Test create a new pedigree without additional filtering."""
     case_id = "9075-18"
+    new_case_id = build_new_case_id(case_id)
 
     # create new pedigree
     exp_id = ["9075-18", "2112-19", "2113-19"]
-    ped = create_new_pedigree(case_id, exp_id, {}).to_json()
+    ped = create_new_pedigree(case_id, new_case_id, exp_id, {}).to_json()
 
     # te st file
     assert len(ped) == 3
@@ -63,9 +67,10 @@ def test_create_pedigree(app):
 def test_pedigree_sample_id_filters(app, sample_id):
     """Test create pedigree with variable number of samples."""
     case_id = "9075-18"
+    new_case_id = build_new_case_id(case_id)
 
     # test one sample
-    ped = create_new_pedigree(case_id, sample_id).to_json()
+    ped = create_new_pedigree(case_id, new_case_id, sample_id).to_json()
     assert sorted([sample["id"] for sample in ped]) == sorted(sample_id)
 
 
@@ -164,8 +169,9 @@ def test_modify_pedigree_data(app, edited_data, exp_ped):
     """Test modification of the pedigree data."""
     case_id = exp_ped[0]["family_id"]
     sample_id = exp_ped[0]["id"]
+    new_case_id = build_new_case_id(case_id)
     edited_data["sample_id"] = sample_id
-    ped = create_new_pedigree(case_id, [sample_id], [edited_data])
+    ped = create_new_pedigree(case_id, case_id, [sample_id], [edited_data])
     assert ped.to_json() == exp_ped
 
 
@@ -178,7 +184,7 @@ def test_to_ped(app, monkeypatch):
 
     # mock dictwriter
     monkeypatch.setattr("app.io.csv.DictWriter", mock_dictwriter)
-    ped = create_new_pedigree("9075-18", ["9075-18"])
+    ped = create_new_pedigree("9075-18", "new_case_id", ["9075-18"])
     # call mock
     with open_mock() as o:
         ped.to_ped(o)
@@ -192,7 +198,7 @@ def test_to_ped(app, monkeypatch):
     mock_dictwriter.reset_mock()  # reset mock
 
     # with two sample ids
-    ped = create_new_pedigree("9075-18", ["9075-18", "2112-19"])
+    ped = create_new_pedigree("9075-18", "new_case_id", ["9075-18", "2112-19"])
     # call mock
     with open_mock() as o:
         ped.to_ped(o, write_header=False)

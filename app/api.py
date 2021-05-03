@@ -2,7 +2,7 @@
 import csv
 import logging
 import os
-from datetime import datetime
+import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -47,22 +47,32 @@ def authenticate_user(user_email, api_key, required_scopes=None):
     return info
 
 
+def build_new_case_id(case_id):
+    """Make new case id from an old case id."""
+    date = datetime.date.today().isoformat()
+    return f"{case_id}-ped-update-{date}"
+
+
 def conduct_reanalysis(case_id, **kwargs):
     """Setup and start a reanalysis."""
     LOG.info(f"Recieved request; case id: {case_id}; {kwargs}")
-    pedigree = create_new_pedigree(case_id, kwargs.get("sample_ids", []), kwargs.get("body", []))
+    # create a new group id for the rerun
+    rerun_group_id = build_new_case_id(case_id)
+    pedigree = create_new_pedigree(case_id, rerun_group_id, kwargs.get("sample_ids", []), kwargs.get("body", []))
 
     cnf = app.config
     # write files to temporary directory
     with TemporaryDirectory(prefix=case_id) as tmp_dir:
-        date = datetime.now().strftime("%y%m%d_%H%M%S")
+        date = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
         directory = Path(tmp_dir)
         base_fname = f"{case_id}_{date}_rescore"
+
+
         # write run data to csv format
         run_data_path = directory / f"{base_fname}.csv"
         with open(run_data_path, "w") as out:
             LOG.info(f"Writing rundata to {run_data_path}")
-            run_data = create_rundata(case_id)
+            run_data = create_rundata(case_id, rerun_group_id)
             cwriter = csv.DictWriter(out, fieldnames=list(run_data[0].keys()))
             cwriter.writeheader()
             for row in run_data:

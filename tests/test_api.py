@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import Mock
 
 import pytest
-from app.api import authenticate_user, conduct_reanalysis, run_rescore
+from app.api import authenticate_user, conduct_reanalysis, run_rescore, build_new_case_id
 from app.exceptions import PipelineExecutionError, SSHKeyException
 from app.io import Family
 from connexion.exceptions import OAuthProblem
@@ -128,13 +128,14 @@ def test_toggle_rerun_success(app, monkeypatch, init_rerun_func):
 
     # toggle rerun
     case_id = "9075-18"
+    new_case_id = build_new_case_id(case_id)
     sample_ids = ["9075-18", "2112-19"]
-    conduct_reanalysis(case_id, sample_ids=sample_ids)
+    conduct_reanalysis(case_id, new_case_id=new_case_id, sample_ids=sample_ids)
 
     # test that rundata was written
-    mock_rundata.assert_called_with(case_id)
+    mock_rundata.assert_called_with(case_id, new_case_id)
     # test that mock_pedigree
-    mock_pedigree.assert_called_with(case_id, sample_ids, [])
+    mock_pedigree.assert_called_with(case_id, new_case_id, sample_ids, [])
     # test setting up connection
     mock_connection.assert_called_with(
         host="http://worker.remote",
