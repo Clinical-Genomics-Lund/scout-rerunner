@@ -81,8 +81,8 @@ class Family(object):
         for row in self._individuals:
             cwriter.writerow(
                 {
-                    self.ped_header[0]: row.id,
-                    self.ped_header[1]: row.family_id,
+                    self.ped_header[0]: row.family_id,
+                    self.ped_header[1]: row.id,
                     self.ped_header[2]: row.mother,
                     self.ped_header[3]: row.father,
                     self.ped_header[4]: row.sex,
@@ -137,7 +137,7 @@ def create_new_pedigree(case_id, new_case_id, sample_ids, edited_sample_info=[])
         # store family information
         family_ped.add_individual(
             Individual(
-                ind_id,
+                id=ind_id,
                 family_id=new_case_id,
                 mother=mother,
                 father=father,
